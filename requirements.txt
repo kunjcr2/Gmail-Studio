@@ -1,0 +1,5 @@
+python-dotenv
+pymongo
+streamlit
+google-api-python-client
+pandas
