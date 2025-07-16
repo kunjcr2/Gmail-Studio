@@ -1,6 +1,5 @@
 # Authentication and Authorization for Streamlit App on emails
 import streamlit as st
-import pymongo
 from pymongo import MongoClient
 import bcrypt
 import dotenv
@@ -75,5 +74,4 @@ def main():
     else:
         st.error("Please select a valid option from the menu.")
 
-if __name__ == "__main__":
-    main()
+main()
