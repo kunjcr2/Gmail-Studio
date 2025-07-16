@@ -45,6 +45,7 @@ def register_user(username, password1, password2):
 
 # Streamlit app for authentication
 def main():
+    
     st.title("Streamlit Authentication")
 
     menu = ["Login", "Register"]
@@ -58,6 +59,7 @@ def main():
         if st.button("Login"):
             if authenticate_user(username, password):
                 st.success("Logged in successfully!")
+                return True
                 # Redirect to main app or dashboard
             else:
                 st.error("Invalid username or password.")
@@ -70,8 +72,7 @@ def main():
         if st.button("Register"):
             if register_user(username, password1, password2):
                 st.success("User registered successfully!")
+                return True
                 # Redirect to login page or main app
     else:
         st.error("Please select a valid option from the menu.")
-
-main()

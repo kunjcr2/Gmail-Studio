@@ -1,1 +1,0 @@
-# Connects auth and app
