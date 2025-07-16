@@ -3,3 +3,4 @@ pymongo
 streamlit
 google-api-python-client
 pandas
+bcrypt
