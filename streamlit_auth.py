@@ -1,78 +1,26 @@
-# Authentication and Authorization for Streamlit App on emails
 import streamlit as st
-from pymongo import MongoClient
-import bcrypt
-import dotenv
-import os
+from streamlit_auth import gmail_login
+from googleapiclient.errors import HttpError
 
-dotenv.load_dotenv()
+st.title("📧 Gmail Analytics Studio")
 
-# MongoDB connection
-def get_user_collection():
-    mongodb_uri = os.getenv("MONGODB_URI")
-    client = MongoClient(mongodb_uri)
-    db_name = os.getenv("DB_NAME")
-    if not db_name:
-        raise ValueError("DB_NAME environment variable is not set.")
-    collection_name = os.getenv("COLLECTION_USERS")
-    return client[db_name][collection_name]
+service = gmail_login()
 
-# Authenticate user with username and password
-def authenticate_user(username, password):
-    user_collection = get_user_collection()
-    
-    user = user_collection.find_one({"username": username})
-    if user:
-        if bcrypt.checkpw(password.encode('utf-8'), user['password']):
-            return True
-    return False
+if service:
+    try:
+        # Sample: Get number of emails
+        profile = service.users().getProfile(userId='me').execute()
+        total_messages = profile.get('messagesTotal')
+        st.metric("Total Emails", total_messages)
 
-# Register a new user
-def register_user(username, password1, password2):
-    user_collection = get_user_collection()
-    
-    if password1 != password2:
-        st.error("Passwords do not match.")
-        return False
-    
-    if user_collection.find_one({"username": username}):
-        st.error("Username already exists.")
-        return False
-    
-    hashed_password = bcrypt.hashpw(password1.encode('utf-8'), bcrypt.gensalt())
-    user_collection.insert_one({"username": username, "password": hashed_password})
-    return True
+        # Sample: List latest 5 threads
+        results = service.users().threads().list(userId='me', maxResults=5).execute()
+        threads = results.get('threads', [])
 
-# Streamlit app for authentication
-def main():
-    
-    st.title("Streamlit Authentication")
-
-    menu = ["Login", "Register"]
-    choice = st.sidebar.selectbox("Menu", menu)
-
-    if choice == "Login":
-        st.header("Login")
-        username = st.text_input("Username")
-        password = st.text_input("Password", type='password')
-
-        if st.button("Login"):
-            if authenticate_user(username, password):
-                st.success("Logged in successfully!")
-                return True
-                # Redirect to main app or dashboard
-            else:
-                st.error("Invalid username or password.")
-    elif choice == "Register":
-        st.header("Register")
-        username = st.text_input("Username")
-        password1 = st.text_input("Password", type='password')
-        password2 = st.text_input("Confirm Password", type='password')
-
-        if st.button("Register"):
-            if register_user(username, password1, password2):
-                st.success("User registered successfully!")
-                return True
-                # Redirect to login page or main app
-    else:
-        st.error("Please select a valid option from the menu.")
+        st.subheader("Recent Threads:")
+        for thread in threads:
+            data = service.users().threads().get(userId='me', id=thread['id']).execute()
+            snippet = data.get('snippet', '')
+            st.write(snippet)
+    except HttpError as e:
+        st.error(f"An error occurred: {e}")
